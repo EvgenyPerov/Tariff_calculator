@@ -8,3 +8,5 @@ COPY $JAR /tariffCalculator.jar
 
 ENTRYPOINT ["java","-jar"]
 CMD ["tariffCalculator.jar"]
+# docker build -t ru.fastdelivery:latest .
+# docker run --rm --name fastdelivery-app -p 8081:8080 -d ru.fastdelivery:latest

@@ -15,7 +15,7 @@
 
     <properties>
         <hibernate-validator.version>8.0.1.Final</hibernate-validator.version>
-        <swagger.version>2.0.0</swagger.version>
+        <swagger.version>2.4.0</swagger.version>
     </properties>
 
     <dependencies>
