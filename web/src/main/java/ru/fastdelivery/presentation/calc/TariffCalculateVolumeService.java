@@ -15,20 +15,22 @@ public class TariffCalculateVolumeService {
     public double costPerCube;
 
     public double calcCubeMetres(BigInteger length, BigInteger width, BigInteger height) {
-        var multi = roundValue(length).multiply(roundValue(width)).multiply(roundValue(height)).toString();
+        var multi =
+            roundValue(length).multiply(roundValue(width)).multiply(roundValue(height)).toString();
         var cubeMilimetres = new BigDecimal(multi);
-        BigDecimal cubeMetres = cubeMilimetres.divide(BigDecimal.valueOf(1_000_000_000),4, RoundingMode.HALF_UP);
+        BigDecimal cubeMetres =
+            cubeMilimetres.divide(BigDecimal.valueOf(1_000_000_000), 4, RoundingMode.HALF_UP);
         return cubeMetres.doubleValue();
     }
 
-    public double getCostAllPackageByVolume(double totalSummaVolume){
+    public double getCostAllPackageByVolume(double totalSummaVolume) {
         return totalSummaVolume * costPerCube;
     }
 
     private BigInteger roundValue(BigInteger value) {
         BigInteger ostatok = value.mod(KRATNO);
-        return (ostatok.intValue() < KRATNO.intValue() / 2) ?
-                value.subtract(ostatok) : value.add(KRATNO.subtract(ostatok));
+        return (ostatok.intValue() < KRATNO.intValue() / 2)
+            ? value.subtract(ostatok) : value.add(KRATNO.subtract(ostatok));
 
     }
 }

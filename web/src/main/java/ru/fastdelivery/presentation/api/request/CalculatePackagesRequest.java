@@ -27,5 +27,5 @@ public record CalculatePackagesRequest(
         @NotNull
         @Valid
         Coordinate departure
-        ) {
+) {
 }

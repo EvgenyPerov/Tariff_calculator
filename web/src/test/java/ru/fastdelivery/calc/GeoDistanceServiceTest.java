@@ -3,20 +3,16 @@ package ru.fastdelivery.calc;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import ru.fastdelivery.presentation.api.request.Coordinate;
 import ru.fastdelivery.presentation.calc.GeoDistanceService;
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-//@ExtendWith(SpringExtension.class)
 public class GeoDistanceServiceTest {
     @InjectMocks
-    private GeoDistanceService distanceService; // = new GeoDistanceService();
+    private GeoDistanceService distanceService;
 
     private static final int EARTH_RADIUS = 6371; // Радиус Земли в километрах
 
@@ -49,7 +45,7 @@ public class GeoDistanceServiceTest {
         double resultActual =  distanceService.calculateDistance(55.7522, 87.62, 56.9972, 40.9714);
 
         assertEquals(resultExpected, resultActual);
-    };
+    }
 
     private double haversine(double val) {
         return Math.pow(Math.sin(val / 2), 2);

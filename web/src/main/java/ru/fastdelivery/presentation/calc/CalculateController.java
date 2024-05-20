@@ -48,28 +48,22 @@ public class CalculateController {
     })
     public CalculatePackagesResponse calculate(
             @Valid @RequestBody CalculatePackagesRequest request) {
-        List<Pack> packsWeights = request.packages().stream()
-                .map(CargoPackage::weight)
-                .map(Weight::new)
-                .map(Pack::new)
-                .toList();
-
-        Shipment shipment = new Shipment(packsWeights, currencyFactory.create(request.currencyCode()));
-        Price calculatedPrice = tariffCalculateUseCase.calc(shipment);
-        Price minimalPrice = tariffCalculateUseCase.minimalPrice();
 
         Set<Double> summSet = new HashSet<>();
         request.packages().forEach(pack ->
             summSet.add(tariffService.calcCubeMetres(pack.length(), pack.width(), pack.height()))
         );
         double totalSummaVolume = summSet.stream().mapToDouble(Double::doubleValue).sum();
-        double totalCostAllPackageVolume = tariffService.getCostAllPackageByVolume(totalSummaVolume);
+        double totalCostAllPackageVolume =
+            tariffService.getCostAllPackageByVolume(totalSummaVolume);
 
         Currency currencyCode = currencyFactory.create(request.currencyCode());
-        Price priceByVolume = new Price(new BigDecimal(totalCostAllPackageVolume),currencyCode);
+        Price priceByVolume = new Price(new BigDecimal(totalCostAllPackageVolume), currencyCode);
 
-        Coordinate coordinateFrom = new Coordinate(request.departure().latitude(), request.departure().longitude());
-        Coordinate coordinateTo = new Coordinate(request.destination().latitude(), request.destination().longitude());
+        Coordinate coordinateFrom = new Coordinate(request.departure().latitude(),
+            request.departure().longitude());
+        Coordinate coordinateTo = new Coordinate(request.destination().latitude(),
+            request.destination().longitude());
 
         distanceService.checkCoordinate(coordinateFrom);
         distanceService.checkCoordinate(coordinateTo);
@@ -77,12 +71,24 @@ public class CalculateController {
         double distance = distanceService.calculateDistance(coordinateFrom.latitude(),
                 coordinateFrom.longitude(), coordinateTo.latitude(), coordinateTo.longitude());
 
+        List<Pack> packsWeights = request.packages().stream()
+            .map(CargoPackage::weight)
+            .map(Weight::new)
+            .map(Pack::new)
+            .toList();
+
+        Shipment shipment =
+            new Shipment(packsWeights, currencyFactory.create(request.currencyCode()));
+        Price calculatedPrice = tariffCalculateUseCase.calc(shipment);
         Price basePrice = calculatedPrice.max(priceByVolume);
 
         double parts = distance / DISTANCE_KRATNO;
 
+        Price minimalPrice = tariffCalculateUseCase.minimalPrice();
+
         if (distance / DISTANCE_KRATNO > 1) {
-            BigDecimal summa = (BigDecimal.valueOf(parts).multiply(basePrice.amount())).setScale(2, RoundingMode.HALF_UP);
+            BigDecimal summa = (BigDecimal.valueOf(parts).multiply(basePrice.amount()))
+                .setScale(2, RoundingMode.HALF_UP);
             Price priceMoreThenKratnoDistance = new Price(summa, currencyCode);
             return new CalculatePackagesResponse(priceMoreThenKratnoDistance, minimalPrice);
         }

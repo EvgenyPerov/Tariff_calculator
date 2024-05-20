@@ -9,7 +9,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class CurrencyFactoryTest {
-
     CurrencyPropertiesProvider mockProvider = mock(CurrencyPropertiesProvider.class);
     CurrencyFactory factory = new CurrencyFactory(mockProvider);
 

@@ -4,9 +4,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import ru.fastdelivery.presentation.calc.GeoDistanceService;
 import ru.fastdelivery.presentation.calc.TariffCalculateVolumeService;
 
 import java.math.BigDecimal;
