@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,11 +18,12 @@ import ru.fastdelivery.domain.delivery.pack.Pack;
 import ru.fastdelivery.domain.delivery.shipment.Shipment;
 import ru.fastdelivery.presentation.api.request.CalculatePackagesRequest;
 import ru.fastdelivery.presentation.api.request.CargoPackage;
+import ru.fastdelivery.presentation.api.request.Coordinate;
 import ru.fastdelivery.presentation.api.response.CalculatePackagesResponse;
 import ru.fastdelivery.usecase.TariffCalculateUseCase;
-import ru.fastdelivery.usecase.TariffCalculateVolume;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -35,9 +35,10 @@ import java.util.Set;
 public class CalculateController {
     private final TariffCalculateUseCase tariffCalculateUseCase;
     private final CurrencyFactory currencyFactory;
+    private final GeoDistanceService distanceService;
+    private final TariffCalculateVolumeService tariffService;
 
-    @Value("${cost.rub.perCube}")
-    private String costPerCube;
+    private static final double DISTANCE_KRATNO = 450;
 
     @PostMapping
     @Operation(summary = "Расчет стоимости по упаковкам груза")
@@ -58,20 +59,34 @@ public class CalculateController {
         Price minimalPrice = tariffCalculateUseCase.minimalPrice();
 
         Set<Double> summSet = new HashSet<>();
-        request.packages().forEach(pack -> {
-            TariffCalculateVolume tariffCalculateVolume = new TariffCalculateVolume(pack.length(),
-                    pack.width(), pack.height());
-            double val = tariffCalculateVolume.calcCubeMetres();
-            summSet.add(val);
-        });
-
+        request.packages().forEach(pack ->
+            summSet.add(tariffService.calcCubeMetres(pack.length(), pack.width(), pack.height()))
+        );
         double totalSummaVolume = summSet.stream().mapToDouble(Double::doubleValue).sum();
-        double totalCostAllPackageVolume = totalSummaVolume * Double.parseDouble(costPerCube);
+        double totalCostAllPackageVolume = tariffService.getCostAllPackageByVolume(totalSummaVolume);
 
-        Price price = new Price(new BigDecimal(totalCostAllPackageVolume),
-                currencyFactory.create(request.currencyCode()));
+        Currency currencyCode = currencyFactory.create(request.currencyCode());
+        Price priceByVolume = new Price(new BigDecimal(totalCostAllPackageVolume),currencyCode);
 
-        return new CalculatePackagesResponse(calculatedPrice.max(price), minimalPrice);
+        Coordinate coordinateFrom = new Coordinate(request.departure().latitude(), request.departure().longitude());
+        Coordinate coordinateTo = new Coordinate(request.destination().latitude(), request.destination().longitude());
+
+        distanceService.checkCoordinate(coordinateFrom);
+        distanceService.checkCoordinate(coordinateTo);
+
+        double distance = distanceService.calculateDistance(coordinateFrom.latitude(),
+                coordinateFrom.longitude(), coordinateTo.latitude(), coordinateTo.longitude());
+
+        Price basePrice = calculatedPrice.max(priceByVolume);
+
+        double parts = distance / DISTANCE_KRATNO;
+
+        if (distance / DISTANCE_KRATNO > 1) {
+            BigDecimal summa = (BigDecimal.valueOf(parts).multiply(basePrice.amount())).setScale(2, RoundingMode.HALF_UP);
+            Price priceMoreThenKratnoDistance = new Price(summa, currencyCode);
+            return new CalculatePackagesResponse(priceMoreThenKratnoDistance, minimalPrice);
+        }
+        return new CalculatePackagesResponse(basePrice, minimalPrice);
     }
 }
 

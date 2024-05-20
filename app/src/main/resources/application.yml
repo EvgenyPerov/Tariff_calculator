@@ -6,3 +6,9 @@ cost:
     perKg: 400
     minimal: 350
     perCube: 18500
+
+coordinate:
+  latitudeMin: 45
+  latitudeMax: 65
+  longitudeMin: 30
+  longitudeMax: 96
